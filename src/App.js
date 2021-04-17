@@ -1,23 +1,64 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import Search from './components/Search'
+import Results from './components/Results'
+import Detail from './components/Detail'
 import './App.css';
 
 function App() {
+  const [valorDelInput, setValorDelInput] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [productos, setProductos] = useState([]);
+  const [productoDetalle, setProductoDetalle] = useState({});
+  const [tipoDeVista, setTipoDeVista] = useState("busqueda")
+  const [idProductoDetalle, setIdProductoDetalle] = useState('')
+  const [urlBusqueda, setUrlBusqueda] = useState("sites/MLA/search?q=")
+
+  const handleChange = e => {
+    setValorDelInput(e.target.value);
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    setBusqueda(valorDelInput);
+  };
+
+  useEffect(() => {
+    const query = tipoDeVista === "busqueda" ? valorDelInput : idProductoDetalle
+    fetch(`https://api.mercadolibre.com/${urlBusqueda}${query}`)
+      .then(res => res.json())
+      .then(data => {
+        if (tipoDeVista == "busqueda") {
+        setProductos(data.results)
+        }
+        if (tipoDeVista === "detalle") {
+          setProductoDetalle(data)
+        }
+      });
+  }, [ busqueda, idProductoDetalle ]);
+
+  const handleClickDetalle = (id) => {
+    setIdProductoDetalle(id)
+    setUrlBusqueda("items/")
+    setTipoDeVista("detalle")
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Search 
+        valorDelInput={valorDelInput}
+        handleChange={handleChange}
+        handleSubmit={handleSubmit}
+      />
+
+    {tipoDeVista === "busqueda" && 
+      <Results productos={productos} handleClickDetalle={handleClickDetalle}/>
+    }
+    
+    {tipoDeVista === "detalle" && 
+      <Detail 
+        productoDetalle={productoDetalle}
+      />
+    }
     </div>
   );
 }
